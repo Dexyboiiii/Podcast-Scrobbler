@@ -4,31 +4,31 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class Track {
-    var trackArtist: String
+    var artist: String
         private set
-    var trackName: String
+    var title: String
         private set
-    private var trackLabel: String? = null
-    var trackTimestamp = 0
+    private var label: String? = null
+    var timestamp = 0
         private set
 
     constructor(artist: String, name: String) {
-        trackArtist = artist
-        trackName = name
+        this.artist = artist
+        title = name
     }
 
     constructor(artist: String, name: String, label: String?, timestamp: Int) {
-        trackArtist = artist
-        trackName = name
-        trackLabel = label
-        trackTimestamp = timestamp
+        this.artist = artist
+        title = name
+        this.label = label
+        this.timestamp = timestamp
     }
 
     override fun toString(): String {
         return """
-               Artist:    $trackArtist
-               Track:     $trackName
-               Label:     $trackLabel
+               Artist:    $artist
+               Track:     $title
+               Label:     $label
                """.trimIndent()
     }
 }

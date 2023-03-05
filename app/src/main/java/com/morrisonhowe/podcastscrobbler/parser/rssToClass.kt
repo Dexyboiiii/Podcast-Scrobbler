@@ -50,7 +50,7 @@ fun rssToClass(rssString: String): Podcast {
         val tag = elem.nodeName
         if (tag == "item") {
             episodeNumber++
-            podcastData.insertEpisode()
+            podcastData.insertEpisode(episodeNumber - 1)
         }
         if (episodeNumber == 0) {
             when (tag) {

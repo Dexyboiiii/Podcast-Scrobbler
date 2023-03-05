@@ -1,9 +1,10 @@
 package com.morrisonhowe.podcastscrobbler.types
 
+import com.morrisonhowe.podcastscrobbler.parser.getTracks
 import kotlinx.serialization.Serializable
 
 @Serializable
-class Episode {
+class Episode(val key: Int) {
     var tracks: ArrayList<Track>
 
     /**
@@ -36,12 +37,21 @@ class Episode {
      */
     var imageURL: String = ""
 
+    /**
+     * @param tracklistLog the log of what happened during the last invocation of parseDescription()
+     */
+    var tracklistLog: String = ""
+
     init {
         tracks = ArrayList()
     }
 
     fun insertTrack(trackToInsert: Track) {
         tracks.add(trackToInsert)
+    }
+
+    fun parseDescription() {
+        getTracks(this)
     }
 
     override fun toString(): String {

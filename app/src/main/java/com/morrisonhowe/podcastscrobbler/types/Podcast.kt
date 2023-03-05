@@ -1,7 +1,5 @@
 package com.morrisonhowe.podcastscrobbler.types
 
-import com.morrisonhowe.podcastscrobbler.parser.getTracks.main
-import java.util.function.UnaryOperator
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -36,8 +34,8 @@ class Podcast {
         episodes.add(episode)
     }
 
-    fun insertEpisode() {
-        episodes.add(Episode())
+    fun insertEpisode(key: Int) {
+        episodes.add(Episode(key))
     }
 
     // Used if there's a new episode, whether just new to the feed or new as in time
@@ -49,9 +47,7 @@ class Podcast {
         return episodes[index]
     }
 
-    fun parseAllEpisodes() {
-        episodes.replaceAll(getTracksOnEpisodeUO())
-    }
+    // TODO: Parse all episodes function?
 
     override fun toString(): String {
         // TODO: Include all attributes
@@ -73,11 +69,5 @@ class Podcast {
             strToReturn += "\n\nEpisodes:    $episodesToString"
         }
         return strToReturn
-    }
-
-    internal inner class getTracksOnEpisodeUO : UnaryOperator<Episode> {
-        override fun apply(e: Episode): Episode {
-            return main(e)
-        }
     }
 }
