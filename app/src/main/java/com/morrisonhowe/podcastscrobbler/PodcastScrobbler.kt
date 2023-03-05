@@ -62,6 +62,12 @@ fun PodcastScrobbler() {
             )) {backStackEntry ->
                 EpisodesList(backStackEntry.arguments?.getString("podcastTitle"), podcastsSaved, navController)
             }
+            composable(route = "${Screen.EPISODE.name}/{podcastTitle}/{episodeTitle}", arguments = listOf(
+                navArgument("podcastTitle") { type = NavType.StringType },
+                navArgument("episodeTitle") { type = NavType.IntType }
+            )) {backStackEntry ->
+                EpisodeDetails(backStackEntry.arguments?.getString("podcastTitle"), backStackEntry.arguments?.getInt("episodeTitle"), podcastsSaved, navController)
+            }
         }
     }
 }

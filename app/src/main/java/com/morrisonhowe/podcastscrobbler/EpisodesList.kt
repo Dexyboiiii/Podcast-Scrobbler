@@ -25,12 +25,16 @@ import com.morrisonhowe.podcastscrobbler.types.Episode
 import com.morrisonhowe.podcastscrobbler.types.Podcast
 
 @Composable
-fun EpisodesList(podcastTitle: String?, podcastsSaved: SnapshotStateList<Podcast>, navController: NavController) {
+fun EpisodesList(
+    podcastTitle: String?,
+    podcastsSaved: SnapshotStateList<Podcast>,
+    navController: NavController
+) {
     val podcast = podcastsSaved.firstOrNull { it.title == podcastTitle }
     if (podcast != null) {
         Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
             for (episode in podcast.episodes) {
-                EpisodeCard(episode = episode, navController = navController)
+                EpisodeCard(podcast = podcast, episode = episode, navController = navController)
             }
         }
     } else {
@@ -41,8 +45,15 @@ fun EpisodesList(podcastTitle: String?, podcastsSaved: SnapshotStateList<Podcast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EpisodeCard(episode: Episode, navController: NavController) {
-    Card(onClick = { navController.navigate(route = Screen.EPISODE.name) }, modifier = Modifier.padding(20.dp)) {
+fun EpisodeCard(podcast: Podcast?, episode: Episode, navController: NavController) {
+    // If this is called from AddPodcast, then podcast will be null
+    // This prevents the item from being opened, which would crash the app as the podcast has not yet been saved
+    Card(onClick = {
+        if (podcast != null) {
+            val route: String = "${Screen.EPISODE.name}/${podcast.title}/${episode.key}"
+            navController.navigate(route = route)
+        }
+    }, modifier = Modifier.padding(20.dp)) {
         Row {
             Image(
                 painter = rememberAsyncImagePainter(episode.imageURL),
@@ -52,7 +63,12 @@ fun EpisodeCard(episode: Episode, navController: NavController) {
 
             Column(Modifier.padding(5.dp)) {
                 Text(episode.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Clip)
-                Text(episode.desc, color = MaterialTheme.colorScheme.onSecondary, maxLines = 1, overflow = TextOverflow.Clip)
+                Text(
+                    episode.desc,
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip
+                )
             }
 
             Icon(Icons.Filled.ChevronRight, "Right Chevron")

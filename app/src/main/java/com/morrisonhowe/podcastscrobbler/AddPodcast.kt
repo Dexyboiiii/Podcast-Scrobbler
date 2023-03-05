@@ -55,7 +55,7 @@ fun AddPodcast(pm: PodcastsManager, navController: NavController) {
 
         Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
             for (episode in rssPodcast.episodes) {
-                EpisodeCard(episode = episode, navController = navController)
+                EpisodeCard(podcast = null, episode = episode, navController = navController)
             }
         }
 

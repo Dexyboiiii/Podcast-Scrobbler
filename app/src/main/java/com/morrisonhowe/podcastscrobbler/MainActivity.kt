@@ -9,7 +9,6 @@ enum class Screen() {
     PODCASTS_LIST,
     EPISODES_LIST,
     EPISODE,
-    PODCAST,
     ADD_PODCAST
 }
 
