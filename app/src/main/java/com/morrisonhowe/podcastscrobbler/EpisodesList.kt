@@ -2,9 +2,13 @@ package com.morrisonhowe.podcastscrobbler
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,8 +36,12 @@ fun EpisodesList(
 ) {
     val podcast = podcastsSaved.firstOrNull { it.title == podcastTitle }
     if (podcast != null) {
-        Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
-            for (episode in podcast.episodes) {
+        LazyColumn(Modifier.verticalScroll(rememberScrollState(), enabled = true).height(600.dp)) {
+//            for (episode in podcast.episodes) {
+//                EpisodeCard(podcast = podcast, episode = episode, navController = navController)
+//            }
+
+            items(podcast.episodes) {episode ->
                 EpisodeCard(podcast = podcast, episode = episode, navController = navController)
             }
         }

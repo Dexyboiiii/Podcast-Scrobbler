@@ -5,45 +5,29 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class Episode(val key: Int) {
-    var tracks: ArrayList<Track>
-
-    /**
-     * @param title the title to set
-     */
+    var tracks: ArrayList<Track> = ArrayList()
     var title: String = ""
-
-    /**
-     * @param link the link to set
-     */
     var link: String = ""
     var length // Size of file in bytes
             : String = ""
     var type // The format of the file
             : String = ""
-
-    /**
-     * @param desc the desc to set
-     */
     var desc: String = ""
     var contentEncoded: String = ""
-
-    /**
-     * @param date the date to set
-     */
     var date: String = ""
-
-    /**
-     * @param imageURL the imageURL to set
-     */
     var imageURL: String = ""
+    var audioURL: String = ""
 
-    /**
-     * @param tracklistLog the log of what happened during the last invocation of parseDescription()
-     */
     var tracklistLog: String = ""
 
-    init {
-        tracks = ArrayList()
+    fun getTrackAtTime(seconds: Int): Track? {
+        for (track in tracks) {
+            if (track.timestamp < seconds) {
+                return track
+            }
+        }
+
+        return null
     }
 
     fun insertTrack(trackToInsert: Track) {

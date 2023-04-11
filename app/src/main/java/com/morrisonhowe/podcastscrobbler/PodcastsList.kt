@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
@@ -28,12 +29,17 @@ fun PodcastsList(podcasts: SnapshotStateList<Podcast>, pm: PodcastsManager, navC
     val ( remove, setRemove ) = remember { mutableStateOf(false) }
 
     Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
-        // Toggle for removing podcasts
-        Button(onClick = { setRemove(!remove) }) {
-            if (remove) {
-                Icon(Icons.Filled.Done, contentDescription = "Finished removing")
-            } else {
-                Icon(Icons.Filled.Delete, contentDescription = "Remove podcasts")
+        Row {
+            Button(onClick = { setRemove(!remove) }) {
+                if (remove) {
+                    Icon(Icons.Filled.Done, contentDescription = "Finished removing")
+                } else {
+                    Icon(Icons.Filled.Delete, contentDescription = "Remove podcasts")
+                }
+            }
+
+            Button(onClick = { navController.navigate(route = Screen.ADD_PODCAST.name) }) {
+                Icon(Icons.Filled.Add, "Add podcast")
             }
         }
 

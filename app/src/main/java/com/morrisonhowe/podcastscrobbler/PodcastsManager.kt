@@ -19,6 +19,7 @@ class PodcastsManager(context: Context) {
     }
 
     fun retrievePodcasts(): SnapshotStateList<Podcast> {
+        println("Retrieving podcasts! ${this.context.toString()}")
         val fileDir = context.filesDir
         if (File("$fileDir/podcasts.json").isFile) {
             try {

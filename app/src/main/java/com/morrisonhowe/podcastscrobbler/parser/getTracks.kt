@@ -145,17 +145,22 @@ private fun checkIfNumbered(tracksArray: Array<String?>, getTracksErrorLog: Stri
 
 // Compares the amount of linebreaks in two strings
 fun linebreakCompare(str1: String, str2: String): Boolean {
-    val linebreakCountPattern = Pattern.compile("<br />|<br>")
-    var linebreakCountMatcher = linebreakCountPattern.matcher(str1)
+    // Measuring linebreaks in Description (where xml tags have been removed)
+    val linebreakCountPatternDesc = Pattern.compile("\n")
+    var linebreakCountMatcherDesc = linebreakCountPatternDesc.matcher(str1)
     var str1Linebreaks = 0
-    while (linebreakCountMatcher.find()) {
+    while (linebreakCountMatcherDesc.find()) {
         str1Linebreaks++
     }
-    linebreakCountMatcher = linebreakCountPattern.matcher(str2)
+
+    // Measuring linebreaks in Content Encoded (where <br> is used as a line break)
+    // TODO: This can cause issues if there are other XML tags not removed. Can I remove these but keep the <br> tags in?
+    val linebreakCountPatternCE = Pattern.compile("<br />|<br>")
+    val linebreakCountMatcherCE = linebreakCountPatternCE.matcher(str2)
     var str2Linebreaks = 0
-    while (linebreakCountMatcher.find()) {
+    while (linebreakCountMatcherCE.find()) {
         str2Linebreaks++
     }
     // Returns true if there are more linebreaks in the first string
-    return str1Linebreaks > str2Linebreaks
+    return str1Linebreaks >= str2Linebreaks
 }

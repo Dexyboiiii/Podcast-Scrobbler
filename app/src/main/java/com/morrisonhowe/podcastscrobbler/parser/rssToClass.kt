@@ -1,10 +1,12 @@
 package com.morrisonhowe.podcastscrobbler.parser
 
 import com.morrisonhowe.podcastscrobbler.types.Podcast
+import org.apache.commons.text.StringEscapeUtils
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.SAXException
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
@@ -31,7 +33,12 @@ fun rssToClass(rssString: String): Podcast {
         val pathToFixedFeed = Files.createTempFile("fixedFeed", ".rss")
         Files.write(pathToFixedFeed, fileContent.toByteArray())
         // System.out.println("Written to path: " + pathToFixedFeed);
-        document = loader.parse(pathToFixedFeed.toFile())
+        try {
+            document = loader.parse(String(pathToFixedFeed.toFile().readBytes(), StandardCharsets.UTF_8))
+        } catch (e: Exception) {
+            document = loader.parse(pathToFixedFeed.toFile())
+        }
+
     }
     val root = document!!.documentElement
     println(root.nodeName)
@@ -64,6 +71,11 @@ fun rssToClass(rssString: String): Podcast {
             when (tag) {
                 "title" -> podcastData.episodes[episodeNumber - 1].title = text
                 "link" -> podcastData.episodes[episodeNumber - 1].link = text
+                "enclosure" -> {
+                    podcastData.episodes[episodeNumber - 1].audioURL = nNode.getAttribute("url")
+                    podcastData.episodes[episodeNumber - 1].length = nNode.getAttribute("length")
+                    podcastData.episodes[episodeNumber - 1].type = nNode.getAttribute("type")
+                }
                 "url" -> podcastData.episodes[episodeNumber - 1].imageURL = text
                 "pubDate" -> podcastData.episodes[episodeNumber - 1].date = text
                 "description" -> {
