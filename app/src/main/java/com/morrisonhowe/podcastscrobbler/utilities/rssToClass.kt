@@ -1,4 +1,4 @@
-package com.morrisonhowe.podcastscrobbler.parser
+package com.morrisonhowe.podcastscrobbler.utilities
 
 import com.morrisonhowe.podcastscrobbler.types.Podcast
 import org.apache.commons.text.StringEscapeUtils
@@ -8,7 +8,6 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 
@@ -46,7 +45,7 @@ fun rssToClass(rssString: String): Podcast {
     val nList = document.getElementsByTagName("*")
     var episodeNumber = 0
 
-    // For enclosure tags
+
     var url: String
     var length: String
     var type: String
@@ -79,7 +78,7 @@ fun rssToClass(rssString: String): Podcast {
                 "url" -> podcastData.episodes[episodeNumber - 1].imageURL = text
                 "pubDate" -> podcastData.episodes[episodeNumber - 1].date = text
                 "description" -> {
-                    podcastData.episodes[episodeNumber - 1].desc = text
+                    podcastData.episodes[episodeNumber - 1].desc = formatDescription(text)
                     podcastData.episodes[episodeNumber - 1].contentEncoded = text
                     // This code is sHaKy, hence it's in a try catch block
                     try {
@@ -117,4 +116,8 @@ fun rssToClass(rssString: String): Podcast {
         }
     }
     return podcastData
+}
+
+fun formatDescription(description: String): String {
+    return StringEscapeUtils.unescapeXml(description.replace("<br />|<br>|<br/>".toRegex(), "\n").replace("<.*?>".toRegex(), "").replace("â€“".toRegex(), "-"))
 }

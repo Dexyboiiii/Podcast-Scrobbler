@@ -15,8 +15,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.morrisonhowe.podcastscrobbler.parser.rssToClass
+import com.morrisonhowe.podcastscrobbler.utilities.rssToClass
 import com.morrisonhowe.podcastscrobbler.types.Podcast
+import com.morrisonhowe.podcastscrobbler.utilities.PodcastsManager
 import kotlinx.coroutines.launch
 
 @Preview

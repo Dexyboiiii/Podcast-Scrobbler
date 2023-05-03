@@ -37,12 +37,8 @@ fun EpisodesList(
     val podcast = podcastsSaved.firstOrNull { it.title == podcastTitle }
     if (podcast != null) {
         LazyColumn(Modifier.verticalScroll(rememberScrollState(), enabled = true).height(600.dp)) {
-//            for (episode in podcast.episodes) {
-//                EpisodeCard(podcast = podcast, episode = episode, navController = navController)
-//            }
-
             items(podcast.episodes) {episode ->
-                EpisodeCard(podcast = podcast, episode = episode, navController = navController)
+                EpisodeCard(podcast, episode, navController)
             }
         }
     } else {
@@ -73,7 +69,7 @@ fun EpisodeCard(podcast: Podcast?, episode: Episode, navController: NavControlle
                 Text(episode.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Clip)
                 Text(
                     episode.desc,
-                    color = MaterialTheme.colorScheme.onSecondary,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     maxLines = 1,
                     overflow = TextOverflow.Clip
                 )

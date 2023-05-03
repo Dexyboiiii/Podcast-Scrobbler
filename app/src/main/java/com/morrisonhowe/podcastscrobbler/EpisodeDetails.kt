@@ -1,17 +1,14 @@
 package com.morrisonhowe.podcastscrobbler
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.TextView
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,7 +18,6 @@ import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,34 +25,27 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
-import androidx.media3.common.Player
-import androidx.media3.session.MediaController
-import androidx.media3.session.MediaSession
-import androidx.media3.session.SessionToken
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
-import com.google.common.util.concurrent.MoreExecutors
 import com.morrisonhowe.podcastscrobbler.playerservice.MusicPlayerService
 import com.morrisonhowe.podcastscrobbler.types.Episode
 import com.morrisonhowe.podcastscrobbler.types.Podcast
 import com.morrisonhowe.podcastscrobbler.types.Track
+import com.morrisonhowe.podcastscrobbler.utilities.PodcastsManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
-import java.io.Serializable
 
 //@Preview
 //@Composable
@@ -66,7 +55,14 @@ import java.io.Serializable
 //}
 
 @Composable
-fun EpisodeDetails(player: Player?, podcastTitle: String?, episodeKey: Int?, podcastsSaved: SnapshotStateList<Podcast>, navController: NavController) {
+fun EpisodeDetails(
+    service: MusicPlayerService?,
+    podcastTitle: String?,
+    episodeKey: Int?,
+    podcastsSaved: SnapshotStateList<Podcast>,
+    podcastsManager: PodcastsManager,
+    navController: NavController
+) {
     val context = LocalContext.current
 
     val podcast = podcastsSaved.firstOrNull { it.title == podcastTitle }
@@ -81,19 +77,22 @@ fun EpisodeDetails(player: Player?, podcastTitle: String?, episodeKey: Int?, pod
 
     if (episode != null) {
         Column {
-            EpisodeDetailsHeader(episode = episode, player = player)
+            EpisodeDetailsHeader(episode = episode, service = service, podcastsManager)
             EpisodeTabs(episode = episode)
         }
     }
 }
 
 @Composable
-fun EpisodeDetailsHeader(episode: Episode, player: Player?) {
+fun EpisodeDetailsHeader(episode: Episode, service: MusicPlayerService?, podcastsManager: PodcastsManager) {
     var context = LocalContext.current
 
     val (isPaused, setPaused) = remember { mutableStateOf(false) }
 
-    Row {
+    Row(
+        Modifier
+            .background(MaterialTheme.colorScheme.background)
+            .width(411.dp)) {
         Image(
             painter = rememberAsyncImagePainter(episode.imageURL),
             contentDescription = null,
@@ -104,30 +103,41 @@ fun EpisodeDetailsHeader(episode: Episode, player: Player?) {
             Column(
                 Modifier
                     .padding(5.dp)
-                    .width(200.dp)) {
-                Text(episode.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(episode.date, color = MaterialTheme.colorScheme.onSecondary, maxLines = 1, overflow = TextOverflow.Clip)
+                    .width(250.dp)
+            ) {
+                Text(
+                    episode.title,
+                    fontSize = 20.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    episode.date,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip
+                )
             }
 
-            Row {
-                if (player?.isPlaying == true) {
+            Row (modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp)) {
+                if (service?.isPlaying == true) {
                     if (isPaused) {
-                        Button(onClick = { player.play(); setPaused(true) }) {
+                        Button(onClick = { service.play(); setPaused(true) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                             Icon(Icons.Filled.PlayArrow, "Resume")
                         }
                     } else {
-                        Button(onClick = { player.pause(); setPaused(false) }) {
+                        Button(onClick = { service.pause(); setPaused(false) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                             Icon(Icons.Filled.Pause, "Pause")
                         }
                     }
 
                 } else {
-                    Button(onClick = { playPodcast(episode, context) }) {
-                        Icon(Icons.Filled.PlayArrow, "Play Episode")
+                    Button(onClick = { playEpisode(episode, context) }, modifier = Modifier.padding(5.dp, 0.dp)) {
+                        Icon(Icons.Filled.PlayArrow, "Nothing playing")
                     }
                 }
 
-                Button(onClick = { episode.parseDescription() }) {
+                Button(onClick = { episode.parseDescription(); podcastsManager.updatePodcasts() }) {
                     Icon(Icons.Filled.FormatListNumbered, "Parse Description")
                 }
             }
@@ -135,11 +145,11 @@ fun EpisodeDetailsHeader(episode: Episode, player: Player?) {
     }
 }
 
-fun playPodcast(episode: Episode, context: Context) {
+fun playEpisode(episode: Episode, context: Context) {
     val intent = Intent(context, MusicPlayerService::class.java)
     intent.putExtra("episode", Json.encodeToString(episode))
     intent.putExtra("action", "start")
-    context.startForegroundService(intent)
+    context.startService(intent)
 }
 
 @Composable
@@ -149,7 +159,7 @@ fun EpisodeTabs(episode: Episode) {
 
     TabRow(selectedTabIndex = tabIndex) {
         titles.forEachIndexed { index, title ->
-            Tab (
+            Tab(
                 text = { Text(title) },
                 selected = tabIndex == index,
                 onClick = { setTabIndex(index) }
@@ -158,7 +168,8 @@ fun EpisodeTabs(episode: Episode) {
     }
 
     when (tabIndex) {
-        0 -> episodeDescHTML(descString = episode.contentEncoded, Modifier.padding(10.dp))
+        // 0 -> episodeDescHTML(descString = episode.contentEncoded, Modifier.padding(10.dp))
+        0 -> Text(episode.desc, Modifier.padding(10.dp).scrollable(rememberScrollState(), Orientation.Vertical, enabled = true), fontSize = TextUnit(3f, TextUnitType.Em))
         1 -> Tracks(episode)
     }
 }
@@ -167,7 +178,7 @@ fun EpisodeTabs(episode: Episode) {
 fun episodeDescHTML(descString: String, modifier: Modifier) {
     val context = LocalContext.current
 
-    AndroidView (
+    AndroidView(
         modifier = modifier,
         factory = { context -> TextView(context) },
         update = { it.text = HtmlCompat.fromHtml(descString, HtmlCompat.FROM_HTML_MODE_COMPACT) }
@@ -177,10 +188,14 @@ fun episodeDescHTML(descString: String, modifier: Modifier) {
 @Composable
 fun Tracks(episode: Episode) {
     if (episode.tracks.isEmpty()) {
-        Text(text = "No tracks to display. Last parse results:\n${episode.tracklistLog}", Modifier.scrollable(
-            rememberScrollState(), Orientation.Vertical))
+        Text(
+            text = "No tracks to display. Last parse results:\n${episode.tracklistLog}",
+            Modifier.scrollable(
+                rememberScrollState(), Orientation.Vertical, enabled = true
+            )
+        )
     } else {
-        Column(Modifier.scrollable(rememberScrollState(), Orientation.Vertical)) {
+        Column(Modifier.scrollable(rememberScrollState(), Orientation.Vertical, enabled = true)) {
             for (track in episode.tracks) {
                 TrackCard(track)
             }
@@ -191,11 +206,11 @@ fun Tracks(episode: Episode) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackCard(track: Track) {
-    Card {
-        Modifier
-            .padding(5.dp)
-            .width(IntrinsicSize.Max)
-        Text(track.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Clip)
-        Text(track.artist, color = MaterialTheme.colorScheme.onSecondary, maxLines = 1, overflow = TextOverflow.Clip)
-    }
+    Text(track.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Clip)
+    Text(
+        track.artist,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+        maxLines = 1,
+        overflow = TextOverflow.Clip
+    )
 }

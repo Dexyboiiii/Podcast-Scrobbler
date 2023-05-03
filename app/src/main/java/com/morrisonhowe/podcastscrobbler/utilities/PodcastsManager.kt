@@ -1,4 +1,4 @@
-package com.morrisonhowe.podcastscrobbler
+package com.morrisonhowe.podcastscrobbler.utilities
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
@@ -16,6 +16,11 @@ class PodcastsManager(context: Context) {
 
     init {
         savedPodcasts = retrievePodcasts()
+    }
+
+    fun updatePodcasts() {
+        val fileDir = context.filesDir
+        File("$fileDir/podcasts.json").writeText(Json.encodeToString(savedPodcasts.toList()))
     }
 
     fun retrievePodcasts(): SnapshotStateList<Podcast> {

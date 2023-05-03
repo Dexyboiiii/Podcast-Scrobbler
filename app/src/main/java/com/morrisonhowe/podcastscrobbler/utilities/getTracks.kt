@@ -1,13 +1,14 @@
-package com.morrisonhowe.podcastscrobbler.parser
+package com.morrisonhowe.podcastscrobbler.utilities
 
 import com.morrisonhowe.podcastscrobbler.types.Episode
 import com.morrisonhowe.podcastscrobbler.types.Track
+import com.morrisonhowe.podcastscrobbler.types.TracklistParseState
 import org.apache.commons.text.StringEscapeUtils
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
-fun getTracks(episodeToParse: Episode) {
+fun getTracks(episodeToParse: Episode): Triple<MutableList<Track>, TracklistParseState, String> {
     var getTracksErrorLog = ""
     var description = episodeToParse.desc
     // If content:encoded exists, use that.
@@ -22,7 +23,7 @@ fun getTracks(episodeToParse: Episode) {
     }
 
     getTracksErrorLog += description
-    // Removes p tags and turns line breaks into.. line breaks
+    // Removes p tags and turns XML line breaks into Kotlin line breaks
     description = description.replace("<br />|<br>|<br/>".toRegex(), "\n")
     description = description.replace("<.*?>".toRegex(), "")
     // For recent mind over matter podcasts
@@ -59,8 +60,8 @@ fun getTracks(episodeToParse: Episode) {
     // If there aren't enough lines for it to look like a tracklist, give up.
     if (tracklistLength < 3) {
         getTracksErrorLog += "Not enough tracks for a proper tracklist"
-        episodeToParse.tracklistLog = getTracksErrorLog
-        return
+        println(getTracksErrorLog)
+        return Triple(mutableListOf(), TracklistParseState.FAILED, getTracksErrorLog)
     }
     val rawTracklist = arrayOfNulls<String>(tracklistLength)
     var positionInUnparsedTracklist = 0
@@ -90,41 +91,40 @@ fun getTracks(episodeToParse: Episode) {
         }
     }
 
+    var tracks: MutableList<Track> = mutableListOf()
+
     // TODO: Update to Kotlin pattern matching
     val artistTrackSplitterPattern = Pattern.compile("(.+)( – | - )(.+)")
     var artistTrackSplitterMatcher: Matcher
     val labelScraperPatternPattern = Pattern.compile("(.+)( – | - )(.+)(\\[)(.+)(])")
     var labelScraperPatternMatcher: Matcher
-    var trackObj: Track
-    for (unsplitTrack in rawTracklist) {
+    for ((index, unsplitTrack) in rawTracklist.withIndex()) {
         artistTrackSplitterMatcher = artistTrackSplitterPattern.matcher(unsplitTrack)
         labelScraperPatternMatcher = labelScraperPatternPattern.matcher(unsplitTrack)
         // If there is a record label present...
         if (labelScraperPatternMatcher.matches()) {
-            trackObj = Track(
+            val trackObj = Track(
                 labelScraperPatternMatcher.group(1),
                 labelScraperPatternMatcher.group(3),
                 labelScraperPatternMatcher.group(5),
                 -1
             )
-            episodeToParse.insertTrack(trackObj)
+            tracks.add(trackObj)
             // If there isn't a record label present...
         } else if (artistTrackSplitterMatcher.matches()) {
-            trackObj =
+            val trackObj =
                 Track(artistTrackSplitterMatcher.group(1), artistTrackSplitterMatcher.group(3))
-            episodeToParse.insertTrack(trackObj)
+            tracks.add(trackObj)
         } else {
             getTracksErrorLog += """
                     
                     Could not parse: $unsplitTrack
                     """.trimIndent()
-            println(getTracksErrorLog)
         }
     }
     println(getTracksErrorLog)
-    println(episodeToParse.toString())
 
-    episodeToParse.tracklistLog = getTracksErrorLog
+    return Triple(tracks, TracklistParseState.PARSED_WITHOUT_TIMES, getTracksErrorLog)
 
     // TODO: I need to check if tracks are numbered, timestamped, or neither.
     // For timestamped, I could check if there is a colon on each set of numbers, and if they're in ascending order.

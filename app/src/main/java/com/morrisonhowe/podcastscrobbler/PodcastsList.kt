@@ -12,24 +12,25 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.morrisonhowe.podcastscrobbler.types.Podcast
+import com.morrisonhowe.podcastscrobbler.utilities.PodcastsManager
 
 @Composable
 fun PodcastsList(podcasts: SnapshotStateList<Podcast>, pm: PodcastsManager, navController: NavController) {
     val ( remove, setRemove ) = remember { mutableStateOf(false) }
 
-    Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
-        Row {
+    Column(Modifier.width(IntrinsicSize.Max)) {
+        Row(modifier = Modifier.padding(20.dp, 10.dp, 0.dp, 0.dp)) {
             Button(onClick = { setRemove(!remove) }) {
                 if (remove) {
                     Icon(Icons.Filled.Done, contentDescription = "Finished removing")
@@ -38,15 +39,18 @@ fun PodcastsList(podcasts: SnapshotStateList<Podcast>, pm: PodcastsManager, navC
                 }
             }
 
-            Button(onClick = { navController.navigate(route = Screen.ADD_PODCAST.name) }) {
+            Button(onClick = { navController.navigate(route = Screen.ADD_PODCAST.name) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                 Icon(Icons.Filled.Add, "Add podcast")
             }
         }
 
         // List of podcasts
-        for (podcast in podcasts) {
-            PodcastCard(podcast, remove, pm, navController)
+        Column(Modifier.verticalScroll(rememberScrollState(), enabled = true)) {
+            for (podcast in podcasts) {
+                PodcastCard(podcast, remove, pm, navController)
+            }
         }
+
     }
 }
 
@@ -68,7 +72,7 @@ fun PodcastCard(podcast: Podcast, remove: Boolean, pm: PodcastsManager, navContr
         { pm.removePodcast(podcast) }
     }
 
-    Card(onClick = onClickAction, modifier = Modifier.padding(20.dp)) {
+    Card(onClick = onClickAction, modifier = Modifier.padding(20.dp, 10.dp).width(400.dp)) {
         Row {
             Image(
                 painter = rememberAsyncImagePainter(podcast.episodes.first().imageURL),
@@ -79,15 +83,13 @@ fun PodcastCard(podcast: Podcast, remove: Boolean, pm: PodcastsManager, navContr
             Column(
                 Modifier
                     .padding(5.dp)
-                    .width(200.dp)) {
-                Text(podcast.title, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(podcast.author, color = MaterialTheme.colorScheme.onSecondary, maxLines = 1, overflow = TextOverflow.Clip)
+                    .width(IntrinsicSize.Max)) {
+                Text(podcast.title, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(podcast.author, color = MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1, overflow = TextOverflow.Clip)
             }
 
             if (remove) {
                 Icon(Icons.Filled.Delete, "Remove podcast")
-            } else {
-                Icon(Icons.Filled.ChevronRight, "Right Chevron")
             }
 
         }

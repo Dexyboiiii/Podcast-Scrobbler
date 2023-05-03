@@ -1,11 +1,11 @@
 package com.morrisonhowe.podcastscrobbler.types
 
-import com.morrisonhowe.podcastscrobbler.parser.getTracks
+import com.morrisonhowe.podcastscrobbler.utilities.getTracks
 import kotlinx.serialization.Serializable
 
 @Serializable
 class Episode(val key: Int) {
-    var tracks: ArrayList<Track> = ArrayList()
+    var tracks: MutableList<Track> = mutableListOf()
     var title: String = ""
     var link: String = ""
     var length // Size of file in bytes
@@ -19,6 +19,8 @@ class Episode(val key: Int) {
     var audioURL: String = ""
 
     var tracklistLog: String = ""
+
+    var tracklistParseState: TracklistParseState = TracklistParseState.UNPARSED
 
     fun getTrackAtTime(seconds: Int): Track? {
         for (track in tracks) {
@@ -35,7 +37,10 @@ class Episode(val key: Int) {
     }
 
     fun parseDescription() {
-        getTracks(this)
+        val (tracks, tracklistParseState, tracklistLog) = getTracks(this)
+        this.tracks = tracks
+        this.tracklistParseState = tracklistParseState
+        this.tracklistLog = tracklistLog
     }
 
     override fun toString(): String {
@@ -56,7 +61,7 @@ class Episode(val key: Int) {
                
                Image URL:   $imageURL
                """.trimIndent()
-        if (tracks.isEmpty() == false) {
+        if (tracks.isNotEmpty()) {
             strToReturn += "\n\nTracklist:\n\n"
             for (track in tracks) {
                 strToReturn += """

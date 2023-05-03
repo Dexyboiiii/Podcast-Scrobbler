@@ -9,15 +9,14 @@ class Track {
     var title: String
         private set
     private var label: String? = null
-    var timestamp = 0
-        private set
+    var timestamp: Long = 0
 
     constructor(artist: String, name: String) {
         this.artist = artist
         title = name
     }
 
-    constructor(artist: String, name: String, label: String?, timestamp: Int) {
+    constructor(artist: String, name: String, label: String?, timestamp: Long) {
         this.artist = artist
         title = name
         this.label = label
@@ -29,6 +28,8 @@ class Track {
                Artist:    $artist
                Track:     $title
                Label:     $label
+               Timestamp: $timestamp
+               
                """.trimIndent()
     }
 }

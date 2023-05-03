@@ -50,7 +50,6 @@ class Podcast {
     // TODO: Parse all episodes function?
 
     override fun toString(): String {
-        // TODO: Include all attributes
         var strToReturn = """
             
             Title:       $title
