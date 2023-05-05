@@ -8,7 +8,6 @@ import android.os.IBinder
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -31,7 +30,7 @@ fun PodcastScrobbler( service: MusicPlayerService? ) {
     val navController = rememberNavController()
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(SheetState(skipPartiallyExpanded = true, skipHiddenState = true, initialValue = SheetValue.Expanded));
     val context = LocalContext.current
-    var pm = remember { PodcastsManager(context) }
+    val pm = remember { PodcastsManager(context) }
     var podcastsSaved = remember { pm.savedPodcasts }
 
     var (service: MusicPlayerService?, setService) = remember { mutableStateOf<MusicPlayerService?>(null) }
@@ -82,11 +81,11 @@ fun PodcastScrobbler( service: MusicPlayerService? ) {
 
     // If the tracks have not yet been parsed, parse them
     // Should run every composition, i.e. whenever a track starts playing, as at this point the track length is known
-    if (service?.episode?.tracklistParseState == TracklistParseState.UNPARSED || service?.episode?.tracklistParseState == TracklistParseState.PARSED_WITHOUT_TIMES) {
-        service.interpolateTrackPositions()
-    } else if (service?.episode?.tracklistParseState == TracklistParseState.PARSED_WITH_TIMES) {
-        // service.startTrackingLoop()
-    }
+//    if (service?.episode?.tracklistParseState == TracklistParseState.UNPARSED || service?.episode?.tracklistParseState == TracklistParseState.PARSED_WITHOUT_TIMES) {
+//        service.interpolateTrackPositions()
+//    } else if (service?.episode?.tracklistParseState == TracklistParseState.PARSED_WITH_TIMES) {
+//        // service.startTrackingLoop()
+//    }
 
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
@@ -105,7 +104,7 @@ fun PodcastScrobbler( service: MusicPlayerService? ) {
                 null -> psTopBar(title = "PodcastScrobbler", pm = pm)
             }
         },
-        sheetContent = { Controls(bottomSheetScaffoldState, service, title, playWhenReady, paused, setPaused) },
+        sheetContent = { Controls(service, playWhenReady, paused, setPaused) },
         sheetContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
         sheetContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
         scaffoldState = bottomSheetScaffoldState,
@@ -134,7 +133,7 @@ fun PodcastScrobbler( service: MusicPlayerService? ) {
                 navArgument("podcastTitle") { type = NavType.StringType },
                 navArgument("episodeTitle") { type = NavType.IntType }
             )) {backStackEntry ->
-                EpisodeDetails(service, backStackEntry.arguments?.getString("podcastTitle"), backStackEntry.arguments?.getInt("episodeTitle"), podcastsSaved, pm, navController)
+                EpisodeDetails(service, backStackEntry.arguments?.getString("podcastTitle"), backStackEntry.arguments?.getInt("episodeTitle"), podcastsSaved, pm)
             }
         }
     }

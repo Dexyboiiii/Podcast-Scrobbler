@@ -23,9 +23,9 @@ class Episode(val key: Int) {
     var tracklistParseState: TracklistParseState = TracklistParseState.UNPARSED
 
     fun getTrackAtTime(seconds: Int): Track? {
-        for (track in tracks) {
-            if (track.timestamp < seconds) {
-                return track
+        for ((index, track) in tracks.withIndex()) {
+            if (track.timestamp > seconds) {
+                return tracks[index - 1]
             }
         }
 

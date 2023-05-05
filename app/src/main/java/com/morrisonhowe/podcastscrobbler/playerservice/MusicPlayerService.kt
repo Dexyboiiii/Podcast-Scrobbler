@@ -1,13 +1,18 @@
 package com.morrisonhowe.podcastscrobbler.playerservice
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.morrisonhowe.podcastscrobbler.R
 import com.morrisonhowe.podcastscrobbler.types.Episode
 import com.morrisonhowe.podcastscrobbler.types.Track
 import com.morrisonhowe.podcastscrobbler.types.TracklistParseState
@@ -26,7 +31,7 @@ class MusicPlayerService : MediaSessionService() {
     var episode: Episode? = null
 
     // Int of how long the track has been played for. Set to -1 when track is scrobbled
-    var tracksThisSession: MutableMap<Track, Int>? = null
+    private var tracksThisSession: MutableMap<Track, Int> = mutableMapOf<Track, Int>()
     private val binder = LocalBinder()
     val isPlaying: Boolean
         get() = player.isPlaying
@@ -77,6 +82,26 @@ class MusicPlayerService : MediaSessionService() {
             println("Needs valid episode and player")
         }
 
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Creating a notification channel if one doesn't already exist
+        val notificationChannel = NotificationChannel(
+            "podcast_playback",
+            "Podcast Playback",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        notificationManager.createNotificationChannel(notificationChannel)
+
+        // Building a notification with the notificationChannel id
+        val notificationBuilder = NotificationCompat.Builder(this, notificationChannel.id)
+            .setSmallIcon(androidx.media3.session.R.drawable.media_session_service_notification_ic_music_note)
+            .setContentTitle(episode?.title)
+        val notification = notificationBuilder.build()
+
+        // Instructing Android to start a foreground service with the notification
+        startForeground(1, notification)
+
         if (episode?.audioURL != null) {
             player.setMediaItem(MediaItem.fromUri(episode!!.audioURL))
 
@@ -84,7 +109,23 @@ class MusicPlayerService : MediaSessionService() {
 
             player.prepare()
 
-            player.playWhenReady = true;
+            player.playWhenReady = true
+
+            player.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    super.onPlaybackStateChanged(playbackState)
+                    var playing = playbackState == Player.STATE_READY && isPlaying
+                    if (episode?.tracklistParseState != TracklistParseState.PARSED_WITH_TIMES) {
+                        interpolateTrackPositions()
+                    }
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    println("Play when ready changed to $playWhenReady!")
+                    super.onPlayWhenReadyChanged(playWhenReady, reason)
+                }
+            })
+
         }
     }
 
@@ -117,13 +158,44 @@ class MusicPlayerService : MediaSessionService() {
         }
 
         episode?.tracklistParseState = TracklistParseState.PARSED_WITH_TIMES
-        // if the loop has been established for this episode
-        if (loopEpisodeName == episode?.title) {
-            return
-        } else {
-            // startTrackingLoop()
+        startTrackingLoop()
+    }
+
+    fun startTrackingLoop() {
+        CoroutineScope(Main).launch {
+            while (true) {
+                delay(1000)
+                if (player.isPlaying) {
+                    val ct = currentTrack
+                    println("${ct?.title} - ${ct?.artist}")
+                    if (ct != null) {
+                        var trackTime =
+                            tracksThisSession.computeIfAbsent(ct) { 0 } + 1000
+                        tracksThisSession.put(ct, trackTime)
+                        val trackLength: Long? =
+                            (episode?.tracks?.get(episode?.tracks!!.indexOf(ct) + 1)?.timestamp
+                                    )?.minus(currentTrack!!.timestamp)
+                        println("${trackTime}/${trackLength}")
+                        if (trackTime > trackLength!! / 2) {
+                            println("Track has been sufficiently played!")
+                        }
+                        postNotification(ct)
+                    }
+                }
+            }
         }
     }
+
+    fun postNotification(track: Track) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val notificationBuilder = NotificationCompat.Builder(this, "podcast_playback")
+            .setSmallIcon(androidx.media3.session.R.drawable.media_session_service_notification_ic_music_note)
+            .setContentTitle("${track.title} - ${track.artist}")
+
+        notificationManager.notify(1, notificationBuilder.build())
+    }
+
 
 //    fun startTrackingLoop() {
 //        CoroutineScope(IO).launch {

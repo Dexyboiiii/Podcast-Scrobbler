@@ -60,10 +60,8 @@ fun EpisodeDetails(
     podcastTitle: String?,
     episodeKey: Int?,
     podcastsSaved: SnapshotStateList<Podcast>,
-    podcastsManager: PodcastsManager,
-    navController: NavController
+    podcastsManager: PodcastsManager
 ) {
-    val context = LocalContext.current
 
     val podcast = podcastsSaved.firstOrNull { it.title == podcastTitle }
     var episode: Episode;
@@ -87,7 +85,7 @@ fun EpisodeDetails(
 fun EpisodeDetailsHeader(episode: Episode, service: MusicPlayerService?, podcastsManager: PodcastsManager) {
     var context = LocalContext.current
 
-    val (isPaused, setPaused) = remember { mutableStateOf(false) }
+    val (isPaused: Boolean?, setPaused) = remember { mutableStateOf(service?.isPlaying) }
 
     Row(
         Modifier
@@ -107,32 +105,33 @@ fun EpisodeDetailsHeader(episode: Episode, service: MusicPlayerService?, podcast
             ) {
                 Text(
                     episode.title,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontSize = 20.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     episode.date,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
             }
 
             Row (modifier = Modifier.padding(10.dp, 0.dp, 0.dp, 0.dp)) {
-                if (service?.isPlaying == true) {
-                    if (isPaused) {
-                        Button(onClick = { service.play(); setPaused(true) }, modifier = Modifier.padding(5.dp, 0.dp)) {
+                if (service?.player?.isPlaying == true) {
+                    if (isPaused == true) {
+                        Button(onClick = { service?.play(); setPaused(true) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                             Icon(Icons.Filled.PlayArrow, "Resume")
                         }
                     } else {
-                        Button(onClick = { service.pause(); setPaused(false) }, modifier = Modifier.padding(5.dp, 0.dp)) {
+                        Button(onClick = { service?.pause(); setPaused(false) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                             Icon(Icons.Filled.Pause, "Pause")
                         }
                     }
 
                 } else {
-                    Button(onClick = { playEpisode(episode, context) }, modifier = Modifier.padding(5.dp, 0.dp)) {
+                    Button(onClick = { playEpisode(episode, context); setPaused(false) }, modifier = Modifier.padding(5.dp, 0.dp)) {
                         Icon(Icons.Filled.PlayArrow, "Nothing playing")
                     }
                 }
