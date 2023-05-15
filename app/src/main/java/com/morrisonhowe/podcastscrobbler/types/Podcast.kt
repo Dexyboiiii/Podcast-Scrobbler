@@ -12,6 +12,7 @@ class Podcast {
     var copyright: String = ""
     var podcastDesc: String = ""
     var contentEncoded: String = ""
+    var imageURL: String = ""
     var keywords: String = ""
     var author: String = ""
     var category: String = ""

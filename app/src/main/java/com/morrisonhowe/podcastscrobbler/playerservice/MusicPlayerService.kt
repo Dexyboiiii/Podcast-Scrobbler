@@ -162,6 +162,7 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     fun startTrackingLoop() {
+        // Start the following loop as a coroutine, so it does not block playback
         CoroutineScope(Main).launch {
             while (true) {
                 delay(1000)
@@ -169,16 +170,22 @@ class MusicPlayerService : MediaSessionService() {
                     val ct = currentTrack
                     println("${ct?.title} - ${ct?.artist}")
                     if (ct != null) {
+                        // Get the amount of time the current track has played for, incremented by 1000ms
+                        // If an entry does not yet exist, create one with a value of 0ms
                         var trackTime =
                             tracksThisSession.computeIfAbsent(ct) { 0 } + 1000
+                        // Update the value in the map
                         tracksThisSession.put(ct, trackTime)
+                        // Get the amount of time the track should take to play
                         val trackLength: Long? =
                             (episode?.tracks?.get(episode?.tracks!!.indexOf(ct) + 1)?.timestamp
                                     )?.minus(currentTrack!!.timestamp)
                         println("${trackTime}/${trackLength}")
+                        // If more than 50% played, update the user.
                         if (trackTime > trackLength!! / 2) {
                             println("Track has been sufficiently played!")
                         }
+                        // Update the notification with the current track
                         postNotification(ct)
                     }
                 }
@@ -187,34 +194,18 @@ class MusicPlayerService : MediaSessionService() {
     }
 
     fun postNotification(track: Track) {
+        // Get notification manager
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // Build notification for the playback notification channel with the current track and podcast title
         val notificationBuilder = NotificationCompat.Builder(this, "podcast_playback")
             .setSmallIcon(androidx.media3.session.R.drawable.media_session_service_notification_ic_music_note)
-            .setContentTitle("${track.title} - ${track.artist}")
+            .setContentTitle(episode!!.title)
+            .setContentText("${track.title} - ${track.artist}")
 
+        // Post the notification. As the id is the same as the initial notification, it is updated.
         notificationManager.notify(1, notificationBuilder.build())
     }
-
-
-//    fun startTrackingLoop() {
-//        CoroutineScope(IO).launch {
-//            delay(1000)
-//            if (player.isPlaying) {
-//                CoroutineScope(Main).launch {
-//                    if (tracksThisSession?.get(currentTrack) != null) {
-//                        tracksThisSession!![currentTrack!!] = tracksThisSession!![currentTrack]!! + 1
-//                        var trackLength: Long = episode!!.tracks[episode!!.tracks.indexOf(currentTrack)+1].timestamp - currentTrack!!.timestamp
-//                        println("${tracksThisSession!![currentTrack!!]}/${trackLength}")
-//                        if (tracksThisSession!![currentTrack!!]!! > trackLength) {
-//                            println("Track has been sufficiently played! It's scrobblin' time")
-//                        }
-//                    }
-//                    startTrackingLoop()
-//                }
-//            }
-//        }
-//    }
 
     fun play() {
         player.play()
